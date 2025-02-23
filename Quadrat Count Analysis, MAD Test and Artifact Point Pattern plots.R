@@ -70,17 +70,24 @@ df_quadrat$X_mid <- rep(x_mid, each = length(y_mid))
 df_quadrat$Y_mid <- rep(y_mid, times = length(x_mid))
 # Plot as a heatmap
 pdf("quadrat_count.pdf", width = 10, height = 8)
-ggplot(df_quadrat, aes(x = X_mid, y = Y_mid, fill = Count)) +
-  geom_tile(color = "white") +                    # Draw grid cells with white borders
-  geom_text(aes(label = Count), color = "black", size = 3) +  # Add count labels
-  scale_fill_gradient(low = "lightblue", high = "blue") +     # Color gradient for counts
-  labs(title = "Quadrat Count of Artifacts", 
-       x = "Easting (m)", 
-       y = "Northing (m)") +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold the title
-  )
+print(
+  ggplot(df_quadrat, aes(x = X_mid, y = Y_mid, fill = Count)) +
+    geom_tile(color = "white") +
+    geom_text(aes(label = Count), color = "black", size = 3) +
+    scale_fill_gradient(low = "lightblue", high = "blue") +
+    labs(title = "Quadrat Count of Artifacts", 
+         x = "Easting (m)", 
+         y = "Northing (m)") +
+    theme_minimal() +
+    theme(
+      plot.title   = element_text(hjust = 0.5, face = "bold", size = 16),
+      axis.title   = element_text(face = "plain", size = 14),
+      legend.title = element_text(face = "bold", size = 12),
+      legend.text  = element_text(size = 10),
+      legend.key.height = unit(2.5, "cm")
+    ) +
+    guides(fill = guide_colorbar(barwidth = 1, barheight = 10))
+)
 # Save Quadrat Count of Artifacts pdf
 dev.off()
 
@@ -92,63 +99,52 @@ print(mad_test)
 # Artifact point pattern based on data class
 # Create a data frame
 artifact_ppp <- ppp(x = artifact_data$Longitude, y = artifact_data$Latitude, marks = artifact_data$DATACLASS, window = study_window)
-artifact_df <- data.frame(
-  Longitude = artifact_ppp$x,
-  Latitude = artifact_ppp$y,
-  DATACLASS = artifact_ppp$marks
-)
+artifact_df <- data.frame(Longitude = artifact_ppp$x, Latitude = artifact_ppp$y, DATACLASS = artifact_ppp$marks)
 # Ensure DATACLASS is a factor
 artifact_df$DATACLASS <- factor(artifact_df$DATACLASS)
 # Convert the coordinates from degrees to meters relative to the study window's minimum values
-artifact_df <- artifact_df %>%
-  mutate(
-    X_m = (Longitude - study_window$xrange[1]) * meters_per_deg_lon,
-    Y_m = (Latitude - study_window$yrange[1]) * meters_per_deg_lat
-  )
+artifact_df <- artifact_df %>% mutate(X_m = (Longitude - study_window$xrange[1]) * meters_per_deg_lon, Y_m = (Latitude - study_window$yrange[1]) * meters_per_deg_lat)
 # Create a new variable that groups the artifact types as specified
-artifact_df <- artifact_df %>%
-  mutate(new_dataclass = case_when(
-    DATACLASS %in% c("CORE", "COREFRAG") ~ "Core & Fragment",
-    DATACLASS == "COMPFLAKE"               ~ "Complete flake",
-    DATACLASS == "DISTFLAKE"               ~ "Distal flake",
-    DATACLASS == "MEDFLAKE"                ~ "Medial flake",
-    DATACLASS == "PROXFLAKE"               ~ "Proximal flake",
-    DATACLASS == "SHATTER"                 ~ "Shatter",
-    DATACLASS %in% c("COMPTOOL", "MEDTOOL", "DISTTOOL") ~ "Tools",
-    TRUE ~ NA_character_
-  ))
+artifact_df <- artifact_df %>% mutate(new_dataclass = case_when(
+  DATACLASS %in% c("CORE", "COREFRAG") ~ "Core & Fragment",
+  DATACLASS == "COMPFLAKE" ~ "Complete flake",
+  DATACLASS == "DISTFLAKE" ~ "Distal flake",
+  DATACLASS == "MEDFLAKE" ~ "Medial flake",
+  DATACLASS == "PROXFLAKE" ~ "Proximal flake",
+  DATACLASS == "SHATTER" ~ "Shatter",
+  DATACLASS %in% c("COMPTOOL", "MEDTOOL", "DISTTOOL") ~ "Tools",
+  TRUE ~ NA_character_
+))
 # Order the new data class factor in the desired order
-artifact_df$new_dataclass <- factor(artifact_df$new_dataclass, 
-                                    levels = c("Core & Fragment", "Complete flake", "Distal flake", 
-                                               "Medial flake", "Proximal flake", "Shatter", "Tools"))
+artifact_df$new_dataclass <- factor(artifact_df$new_dataclass, levels = c("Core & Fragment", "Complete flake", "Distal flake", "Medial flake", "Proximal flake", "Shatter", "Tools"))
 # Determine the number of unique classes (should be 7)
 n_classes <- length(levels(artifact_df$new_dataclass))
 # Define custom symbols for each of the 7 artifact types.
 custom_shapes <- c(16, 17, 15, 3, 18, 19, 8)
 # Define custom colors for each type
-custom_colors <- c("darkblue", "firebrick", "forestgreen", 
-                   "darkorange", "purple", "goldenrod", "black")
+custom_colors <- c("darkblue", "firebrick", "forestgreen", "darkorange", "purple", "goldenrod", "black")
+# Flip vertically
+M <- max(artifact_df$Y_m, na.rm = TRUE)
+artifact_df <- artifact_df %>% mutate(Y_m_flipped = M - Y_m)
 # Create the plot with the final design
-p <- ggplot(artifact_df, aes(x = X_m, y = Y_m, shape = new_dataclass, color = new_dataclass)) +
+p <- ggplot(artifact_df, aes(x = X_m, y = Y_m_flipped, shape = new_dataclass, color = new_dataclass)) +
   geom_point(size = 3) +
   scale_shape_manual(values = custom_shapes) +
   scale_color_manual(values = custom_colors) +
-  labs(title = "Artifact Point Pattern", 
-       x = "Easting (m)", 
-       y = "Northing (m)",
-       shape = "Artifact Type", 
-       color = "Artifact Type") +
+  labs(title = "Artifact Point Pattern", x = "Easting (m)", y = "Northing (m)", shape = "Artifact Type", color = "Artifact Type") +
   theme_minimal() +
   theme(
-    plot.title   = element_text(hjust = 0.5, face = "bold", size = 16),
-    axis.title   = element_text(face = "bold", size = 14),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    axis.title = element_text(face = "plain", size = 14),
     legend.title = element_text(face = "bold", size = 12),
-    legend.text  = element_text(size = 10),
+    legend.text = element_text(size = 10),
     legend.position = "right"
   ) +
-  # Expand limits by 5% for clarity
-  xlim(0, max(artifact_df$X_m, na.rm = TRUE) * 1.05) +
-  ylim(0, max(artifact_df$Y_m, na.rm = TRUE) * 1.05)
+  # Rename the labels
+  scale_y_continuous(
+    breaks = M - c(0, 100, 200, 300, 400),
+    labels = c("400", "300", "200", "200", "0")
+  )
 # Save the plot
 print(p)
 ggsave("artifact_plot.pdf", plot = p, width = 10, height = 8)
