@@ -37,7 +37,7 @@ artifact_ppp <- ppp(x = artifact_data$Longitude, y = artifact_data$Latitude, mar
 plot(artifact_ppp, main = "Artifact Point Pattern")
 
 # Quadrat Count analysis
-quadrat <- quadratcount(artifact_ppp, nx = 12, ny = 9)
+quadrat <- quadratcount(artifact_ppp, nx = 14, ny = 11)
 # Plot initial Quadrat Count
 plot(quadrat, main = "Quadrat Count")
 # Convert to a data frame
@@ -51,8 +51,10 @@ ggplot(df_quadrat, aes(x = Column, y = Row, fill = Count)) +
   labs(title = "Quadrat Count", x = "Column", y = "Row") +
   theme_minimal()
 # Extract grid boundaries
-x_breaks <- attr(quadrat_dataclass, "xbreaks")
-y_breaks <- attr(quadrat_dataclass, "ybreaks")
+x_breaks <- attr(quadrat, "xbreaks")
+y_breaks <- attr(quadrat, "ybreaks")
+print(x_breaks)  # To check how many quadrats I can set 
+print(y_breaks)
 # Calculate the center latitude
 center_lat <- mean(study_window$yrange)
 # Define conversion factors (assumes a spherical Earth)
@@ -90,6 +92,13 @@ print(
 )
 # Save Quadrat Count of Artifacts pdf
 dev.off()
+# Get quadrat size
+quadrat_width_deg  <- diff(range(x_breaks)) / 14  # nx
+quadrat_height_deg <- diff(range(y_breaks)) / 11   # ny
+quadrat_width_m  <- quadrat_width_deg * meters_per_deg_lon
+quadrat_height_m <- quadrat_height_deg * meters_per_deg_lat
+cat("Each quadrat is approximately:", round(quadrat_width_m, 2), "m horizontally, and", round(quadrat_height_m, 2), "m vertically\n")
+# Each quadrat is approximately: 13.94 m horizontally, and 38.88 m vertically
 
 # Perform the MAD test
 mad_test <- mad.test(artifact_ppp, nsim = 999)
