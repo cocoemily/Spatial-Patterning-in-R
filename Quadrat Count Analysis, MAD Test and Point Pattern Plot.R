@@ -1,0 +1,154 @@
+install.packages(c("spatstat.geom", "spatstat.data", "spatstat.linnet", "dplyr", "readr", "ggplot2"))
+remotes::install_github("spatstat/spatstat.core")
+install.packages("readxl")
+install.packages("remotes")
+install.packages("RColorBrewer")
+install.packages("scales")
+
+library(spatstat)
+library(spatstat.explore)
+library(spatstat.core)
+library(spatstat.geom)
+library(spatstat.linnet)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(RColorBrewer)
+library(scales)
+
+artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dauren.xlsx")
+# Check names
+colnames(artifact_data)
+
+xmin <- min(artifact_data$Longitude, na.rm = TRUE)
+xmax <- max(artifact_data$Longitude, na.rm = TRUE)
+ymin <- min(artifact_data$Latitude, na.rm = TRUE)
+ymax <- max(artifact_data$Latitude, na.rm = TRUE)
+print(c(xmin, xmax, ymin, ymax))
+study_window <- owin(xrange = c(78.64065, 78.64306), yrange = c(43.31997775, 43.32382))
+# Check for outside points
+outside_points <- artifact_data %>% 
+  filter(Longitude < 78.64065 | Longitude > 78.64306 | Latitude < 43.31997775 | Latitude > 43.32382)
+print(outside_points)
+
+artifact_ppp <- ppp(x = artifact_data$Longitude, y = artifact_data$Latitude, marks = artifact_data$DATACLASS, window = study_window)
+# Plot initial Artifact Point Pattern
+plot(artifact_ppp, main = "Artifact Point Pattern")
+
+# Quadrat Count analysis
+quadrat <- quadratcount(artifact_ppp, nx = 12, ny = 9)
+# Plot initial Quadrat Count
+plot(quadrat, main = "Quadrat Count")
+# Convert to a data frame
+df_quadrat <- as.data.frame(as.table(quadrat))
+names(df_quadrat) <- c("Row", "Column", "Count")
+# Initial design
+ggplot(df_quadrat, aes(x = Column, y = Row, fill = Count)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Count), color = "black", size = 3) +
+  scale_fill_gradient(low = "lightblue", high = "blue") +
+  labs(title = "Quadrat Count", x = "Column", y = "Row") +
+  theme_minimal()
+# Extract grid boundaries
+x_breaks <- attr(quadrat_dataclass, "xbreaks")
+y_breaks <- attr(quadrat_dataclass, "ybreaks")
+# Calculate the center latitude
+center_lat <- mean(study_window$yrange)
+# Define conversion factors (assumes a spherical Earth)
+meters_per_deg_lat <- 111320
+meters_per_deg_lon <- 111320 * cos(center_lat * pi/180)
+# Convert boundaries to meters relative to the minimum of the study window
+x_breaks_m <- (x_breaks - min(study_window$xrange)) * meters_per_deg_lon
+y_breaks_m <- (y_breaks - min(study_window$yrange)) * meters_per_deg_lat
+# Calculate midpoints for x and y directions in meters
+x_mid <- (x_breaks_m[-length(x_breaks_m)] + x_breaks_m[-1]) / 2
+y_mid <- (y_breaks_m[-length(y_breaks_m)] + y_breaks_m[-1]) / 2
+# Assign meter-based midpoints. Here, each cell’s x coordinate comes from x_mid and y from y_mid
+# Adjust the repetition to match the layout
+df_quadrat$X_mid <- rep(x_mid, each = length(y_mid))
+df_quadrat$Y_mid <- rep(y_mid, times = length(x_mid))
+# Plot as a heatmap
+pdf("quadrat_count.pdf", width = 10, height = 8)
+ggplot(df_quadrat, aes(x = X_mid, y = Y_mid, fill = Count)) +
+  geom_tile(color = "white") +                    # Draw grid cells with white borders
+  geom_text(aes(label = Count), color = "black", size = 3) +  # Add count labels
+  scale_fill_gradient(low = "lightblue", high = "blue") +     # Color gradient for counts
+  labs(title = "Quadrat Count of Artifacts", 
+       x = "Easting (m)", 
+       y = "Northing (m)") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold the title
+  )
+# Save Quadrat Count of Artifacts pdf
+dev.off()
+
+# Perform the MAD test
+mad_test <- mad.test(artifact_ppp, nsim = 999)
+# Print the MAD test results
+print(mad_test)
+
+# Artifact point pattern based on data class
+# Create a data frame
+artifact_ppp <- ppp(x = artifact_data$Longitude, y = artifact_data$Latitude, marks = artifact_data$DATACLASS, window = study_window)
+artifact_df <- data.frame(
+  Longitude = artifact_ppp$x,
+  Latitude = artifact_ppp$y,
+  DATACLASS = artifact_ppp$marks
+)
+# Ensure DATACLASS is a factor
+artifact_df$DATACLASS <- factor(artifact_df$DATACLASS)
+# Convert the coordinates from degrees to meters relative to the study window's minimum values
+artifact_df <- artifact_df %>%
+  mutate(
+    X_m = (Longitude - study_window$xrange[1]) * meters_per_deg_lon,
+    Y_m = (Latitude - study_window$yrange[1]) * meters_per_deg_lat
+  )
+# Create a new variable that groups the artifact types as specified
+artifact_df <- artifact_df %>%
+  mutate(new_dataclass = case_when(
+    DATACLASS %in% c("CORE", "COREFRAG") ~ "Core & Fragment",
+    DATACLASS == "COMPFLAKE"               ~ "Complete flake",
+    DATACLASS == "DISTFLAKE"               ~ "Distal flake",
+    DATACLASS == "MEDFLAKE"                ~ "Medial flake",
+    DATACLASS == "PROXFLAKE"               ~ "Proximal flake",
+    DATACLASS == "SHATTER"                 ~ "Shatter",
+    DATACLASS %in% c("COMPTOOL", "MEDTOOL", "DISTTOOL") ~ "Tools",
+    TRUE ~ NA_character_
+  ))
+# Order the new data class factor in the desired order
+artifact_df$new_dataclass <- factor(artifact_df$new_dataclass, 
+                                    levels = c("Core & Fragment", "Complete flake", "Distal flake", 
+                                               "Medial flake", "Proximal flake", "Shatter", "Tools"))
+# Determine the number of unique classes (should be 7)
+n_classes <- length(levels(artifact_df$new_dataclass))
+# Define custom symbols for each of the 7 artifact types.
+custom_shapes <- c(16, 17, 15, 3, 18, 19, 8)
+# Define custom colors for each type
+custom_colors <- c("darkblue", "firebrick", "forestgreen", 
+                   "darkorange", "purple", "goldenrod", "black")
+# Create the plot with the final design
+p <- ggplot(artifact_df, aes(x = X_m, y = Y_m, shape = new_dataclass, color = new_dataclass)) +
+  geom_point(size = 3) +
+  scale_shape_manual(values = custom_shapes) +
+  scale_color_manual(values = custom_colors) +
+  labs(title = "Artifact Point Pattern", 
+       x = "Easting (m)", 
+       y = "Northing (m)",
+       shape = "Artifact Type", 
+       color = "Artifact Type") +
+  theme_minimal() +
+  theme(
+    plot.title   = element_text(hjust = 0.5, face = "bold", size = 16),
+    axis.title   = element_text(face = "bold", size = 14),
+    legend.title = element_text(face = "bold", size = 12),
+    legend.text  = element_text(size = 10),
+    legend.position = "right"
+  ) +
+  # Expand limits by 5% for clarity
+  xlim(0, max(artifact_df$X_m, na.rm = TRUE) * 1.05) +
+  ylim(0, max(artifact_df$Y_m, na.rm = TRUE) * 1.05)
+# Save the plot
+print(p)
+ggsave("artifact_plot.pdf", plot = p, width = 10, height = 8)
