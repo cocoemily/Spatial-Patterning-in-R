@@ -152,7 +152,7 @@ p <- ggplot(artifact_df, aes(x = X_m, y = Y_m_flipped, shape = new_dataclass, co
   # Rename the labels
   scale_y_continuous(
     breaks = M - c(0, 100, 200, 300, 400),
-    labels = c("400", "300", "200", "200", "0")
+    labels = c("400", "300", "200", "100", "0")
   )
 # Save the plot
 print(p)
