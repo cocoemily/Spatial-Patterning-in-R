@@ -35,11 +35,7 @@ artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dau
   mutate(new_dataclass = factor(new_dataclass, levels = c("Complete flake", "Distal flake", "Medial flake", "Proximal flake",
                                                           "Tools", "Core & Fragment", "Shatter")),
          X_m = (Longitude - lon_min) * meters_per_deg_lon,
-         Y_m = (lat_max - Latitude) * meters_per_deg_lat) # points are now flipped
-
-# Flip y axis
-M <- max(artifact_data$Y_m, na.rm = TRUE)
-artifact_data <- artifact_data %>% mutate(Y_m_flipped = M - Y_m)
+         Y_m = (Latitude - lat_min) * meters_per_deg_lat)
 
 # Plot
 p <- ggplot(artifact_data, aes(x = X_m, y = Y_m)) +
@@ -62,13 +58,9 @@ p <- ggplot(artifact_data, aes(x = X_m, y = Y_m)) +
         legend.position = "right",
         panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
         axis.title = element_text(size = 14),
+        axis.text = element_text(size = 10),
         plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
-        panel.spacing = unit(0.5, "cm")) +
-  # Rename the labels of y
-  scale_y_continuous(
-    breaks = M - c(0, 100, 200, 300, 400),
-    labels = c("400", "300", "200", "100", "0")
-  )
+        panel.spacing = unit(0.5, "cm")) 
 
 final_plot <- ggdraw(p)
 ggsave("Hotspot_Map_by_Dataclass.pdf", plot = final_plot, width = 10, height = 8, dpi = 300, bg = "white")
