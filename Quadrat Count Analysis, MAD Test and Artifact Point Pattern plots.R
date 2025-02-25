@@ -66,10 +66,11 @@ y_breaks_m <- (y_breaks - min(study_window$yrange)) * meters_per_deg_lat
 # Calculate midpoints for x and y directions in meters
 x_mid <- (x_breaks_m[-length(x_breaks_m)] + x_breaks_m[-1]) / 2
 y_mid <- (y_breaks_m[-length(y_breaks_m)] + y_breaks_m[-1]) / 2
-# Assign meter-based midpoints. Here, each cell’s x coordinate comes from x_mid and y from y_mid
-# Adjust the repetition to match the layout
+# Flip quadrats by mirroring y values
+y_mid_flipped <- max(y_mid) - (y_mid - min(y_mid))
+# Assign meter-based midpoints
 df_quadrat$X_mid <- rep(x_mid, each = length(y_mid))
-df_quadrat$Y_mid <- rep(y_mid, times = length(x_mid))
+df_quadrat$Y_mid <- rep(y_mid_flipped, times = length(x_mid))
 # Plot as a heatmap
 pdf("quadrat_count.pdf", width = 10, height = 8)
 print(
@@ -92,6 +93,7 @@ print(
 )
 # Save Quadrat Count of Artifacts pdf
 dev.off()
+
 # Get quadrat size
 quadrat_width_deg  <- diff(range(x_breaks)) / 14  # nx
 quadrat_height_deg <- diff(range(y_breaks)) / 11   # ny
@@ -132,11 +134,8 @@ n_classes <- length(levels(artifact_df$new_dataclass))
 custom_shapes <- c(16, 17, 15, 3, 18, 19, 8)
 # Define custom colors for each type
 custom_colors <- c("darkblue", "firebrick", "forestgreen", "darkorange", "purple", "goldenrod", "black")
-# Flip vertically
-M <- max(artifact_df$Y_m, na.rm = TRUE)
-artifact_df <- artifact_df %>% mutate(Y_m_flipped = M - Y_m)
 # Create the plot with the final design
-p <- ggplot(artifact_df, aes(x = X_m, y = Y_m_flipped, shape = new_dataclass, color = new_dataclass)) +
+p <- ggplot(artifact_df, aes(x = X_m, y = Y_m, shape = new_dataclass, color = new_dataclass)) +
   geom_point(size = 3) +
   scale_shape_manual(values = custom_shapes) +
   scale_color_manual(values = custom_colors) +
@@ -148,11 +147,6 @@ p <- ggplot(artifact_df, aes(x = X_m, y = Y_m_flipped, shape = new_dataclass, co
     legend.title = element_text(face = "bold", size = 12),
     legend.text = element_text(size = 10),
     legend.position = "right"
-  ) +
-  # Rename the labels
-  scale_y_continuous(
-    breaks = M - c(0, 100, 200, 300, 400),
-    labels = c("400", "300", "200", "100", "0")
   )
 # Save the plot
 print(p)
