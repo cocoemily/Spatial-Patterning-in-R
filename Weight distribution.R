@@ -62,6 +62,9 @@ dens_df <- expand.grid(x = kde_res$eval.points[[1]], y = kde_res$eval.points[[2]
 dens_df$density <- as.vector(kde_res$estimate)
 # Normalize density values
 dens_df$density <- dens_df$density / max(dens_df$density)
+# Flip y-axis
+y_mid <- dens_df$y
+dens_df$y <- max(y_mid) - (y_mid - min(y_mid))
 # Plot
 p_weight_density <- ggplot(dens_df, aes(x = x, y = y, fill = density)) +
   geom_raster(interpolate = TRUE) +
