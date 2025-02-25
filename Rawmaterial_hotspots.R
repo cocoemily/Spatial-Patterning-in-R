@@ -26,8 +26,7 @@ artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dau
   filter(new_rawmaterial %in% c("Chert", "Porphyry", "Shale")) %>%
   mutate(new_rawmaterial = factor(new_rawmaterial, levels = c("Chert", "Porphyry", "Shale")),
          X_m = (Longitude - lon_min) * meters_per_deg_lon,
-         # Flip y axis so that higher values are at the top
-         Y_m = (lat_max - Latitude) * meters_per_deg_lat)
+         Y_m = (Latitude - lat_min) * meters_per_deg_lat)
 
 # Plot
 p <- ggplot(artifact_data, aes(x = X_m, y = Y_m)) +
