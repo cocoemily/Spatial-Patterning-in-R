@@ -49,7 +49,7 @@ p <- ggplot(artifact_data, aes(x = X_m, y = Y_m)) +
   coord_fixed(ratio = 0.7,
               xlim = c(0, (lon_max - lon_min) * meters_per_deg_lon),
               ylim = c(0, (lat_max - lat_min) * meters_per_deg_lat)) +
-  labs(x = "Easting (m)", y = "Northing (m)", title = "Hotspots Map") +
+  labs(x = expression("East"%->%"(m)"), y = expression("North"%->%"(m)"), title = "Hotspots Map") +
   facet_wrap(~ new_dataclass, nrow = 2) +
   theme_minimal() +
   theme(strip.text = element_text(size = 10, face = "bold"),
@@ -58,9 +58,8 @@ p <- ggplot(artifact_data, aes(x = X_m, y = Y_m)) +
         legend.position = "right",
         panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
         axis.title = element_text(size = 14),
-        axis.text = element_text(size = 10),
         plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
-        panel.spacing = unit(0.5, "cm")) 
+        panel.spacing = unit(0.1, "cm")) 
 
 final_plot <- ggdraw(p)
 ggsave("Hotspot_Map_by_Dataclass.pdf", plot = final_plot, width = 10, height = 8, dpi = 300, bg = "white")
