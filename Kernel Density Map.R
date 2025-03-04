@@ -94,7 +94,7 @@ print(p_weight_density)
 ggsave("Kernel_Density_Map_Artifact_Weight.pdf", plot = p_weight_density, width = 8, height = 12, dpi = 300)
 
 # scatter plot
-# I didn't saved the plot on github
+# I didn't save the plot on github
 p_weight_points <- ggplot(artifact_data, aes(x = X_m, y = Y_m, color = Weight)) +
   geom_point(size = 3, alpha = 0.8) +
   scale_color_viridis_c(option = "plasma") +
