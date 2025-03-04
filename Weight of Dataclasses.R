@@ -47,8 +47,8 @@ get_y_breaks <- function(limits) {
 }
 
 # 3. Log-Transformed Histogram Plot with Facet Wrap
-p_weight_histograms <- ggplot(artifact_data, aes(x = Weight)) +
-  geom_histogram(bins = 100, fill = "cyan", color = "black") +
+p_weight_histograms <- ggplot(artifact_data, aes(x = Weight, fill = new_dataclass)) +
+  geom_histogram(bins = 100, color = "black") +
   facet_wrap(~ new_dataclass, scales = "free") +
   scale_x_log10(
     breaks = get_log_breaks(artifact_data), 
@@ -56,6 +56,10 @@ p_weight_histograms <- ggplot(artifact_data, aes(x = Weight)) +
   ) +
   scale_y_continuous(
     breaks = function(limits) get_y_breaks(limits)
+  ) +
+  scale_fill_manual(
+    values = c("lightgreen", "pink", "#9370DB", "#4682B4",
+               "turquoise", "yellow", "#B8860B")
   ) +
   labs(
     title = "Log-Transformed Artifact Weight Distribution by Dataclass",
@@ -66,7 +70,8 @@ p_weight_histograms <- ggplot(artifact_data, aes(x = Weight)) +
     plot.title = element_text(face = "bold", hjust = 0.5, size = 16),
     axis.title = element_text(face = "bold", size = 14),
     axis.text = element_text(size = 10),
-    strip.text = element_text(face = "bold", size = 10)
+    strip.text = element_text(face = "bold", size = 10),
+    legend.position = "none"
   )
 
 print(p_weight_histograms)
