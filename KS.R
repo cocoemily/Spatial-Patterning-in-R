@@ -7,7 +7,7 @@ library(readxl)
 
 artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dauren.xlsx")
 artifact_sf <- st_as_sf(artifact_data, coords = c("Longitude", "Latitude"), crs = 4326)
-elevation_raster <- raster("/Users/kisa/Desktop/map.tif")
+elevation_raster <- raster("/Users/kisa/Desktop/map.tif") # file too big, so it's on our drive
 artifact_sf <- st_transform(artifact_sf, crs = st_crs(elevation_raster))
 artifact_elev <- extract(elevation_raster, st_coordinates(artifact_sf))
 set.seed(123)  #  Generate random points for comparison
