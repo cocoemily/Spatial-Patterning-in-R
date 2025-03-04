@@ -40,7 +40,7 @@ p <- ggplot(artifact_data, aes(x = X_m, y = Y_m)) +
   coord_fixed(ratio = 0.7,
               xlim = c(0, (lon_max - lon_min) * meters_per_deg_lon),
               ylim = c(0, (lat_max - lat_min) * meters_per_deg_lat)) +
-  labs(x = "Easting (m)", y = "Northing (m)", title = "Hotspots Map by Raw Material") +
+  labs(x = expression("East"%->%"(m)"), y = expression("North"%->%"(m)"), title = "Hotspots Map by Raw Material") +
   facet_wrap(~ new_rawmaterial, nrow = 1) +
   theme_minimal() +
   theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
