@@ -17,7 +17,7 @@ library(readxl)
 library(RColorBrewer)
 library(scales)
 
-artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dauren.xlsx")
+artifact_data <- read_excel("Data/Surface Artifacts Full Data Dauren.xlsx")
 # Check names
 colnames(artifact_data)
 
@@ -103,9 +103,23 @@ cat("Each quadrat is approximately:", round(quadrat_width_m, 2), "m horizontally
 # Each quadrat is approximately: 13.94 m horizontally, and 38.88 m vertically
 
 # Perform the MAD test
-mad_test <- mad.test(artifact_ppp, nsim = 999)
-# Print the MAD test results
-print(mad_test)
+#mad_test <- mad.test(artifact_ppp, nsim = 999)
+
+# #####################
+### FROM EMILY: #### 
+mad_test <- mad.test(artifact_ppp, fun = Linhom, sigma = bw.ppl, global = T, nsims = 99, use.theo = T)
+# here we are specifying that the test should use the Linhom function 
+# we are also indicating how the degree of smoothing should be estimated with sigma = bw.ppl (this is the method for an inhomogeneous process)
+# I specify that we are interested in the global envelope (global = T) because it is more robust for detecting CSR
+# I also include a border correction (section 7.4.3) to avoid biases due to our artificial borders from survey
+print(mad_test) # Print the MAD test results
+
+#visualization of the L function (which is a tranformation of the K function)
+rLfun = envelope(artifacts.ppp, Linhom, sigma = bw.ppl,
+                 nsim = 99, global = T, use.theory = T)
+plot(rLfun)
+#this shows that points are more clustered than expected at short distances, but more dispersed than expected at larger distances
+# #####################
 
 # Artifact point pattern based on data class
 # Create a data frame

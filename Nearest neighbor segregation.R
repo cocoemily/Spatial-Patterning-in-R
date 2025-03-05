@@ -60,3 +60,17 @@ nn_segregation_material <- alltypes(
 png("Nearest_Neighbor_Segregation_RawMaterial.png", width = 800, height = 800)
 plot(nn_segregation_material, main = "Nearest-Neighbor Segregation (Raw Material)")
 dev.off()
+
+##############
+### FROM EMILY:####
+marks(artifact_ppp) = as.factor(artifact_data$RAWMATERIAL) #here we set the marks to the attribute we want
+segregation.test(artifact_ppp, sigma = bw.ppl, nsim = 99) #here is the segregation test, which shows us there is spatial segregation with p value of 0.01 
+
+#visualization of spatial segregation
+ProbRM = relrisk(artifact_ppp, sigma = bw.ppl) #calculate the relative intensity of each type of point across space
+dominant = im.apply(ProbRM, which.max) #calculate which has the max intensity at each location
+materials = levels(marks(artifact_ppp)) #this is for labeling
+dominant = eval.im(factor(dominant, levels = 1:3, labels = materials)) #create plot where levels = the number of data classes
+textureplot(dominant)
+
+###############
