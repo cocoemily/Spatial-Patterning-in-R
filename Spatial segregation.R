@@ -26,7 +26,7 @@ artifact_ppp <- ppp(x     = artifact_data$Longitude,
                     marks = artifact_data$RAWMATERIAL,
                     window= study_window)
 
-segregation.test(artifact_ppp, sigma = bw.ppl, nsim = 99)
+segregation.test(artifact_ppp, sigma = bw.ppl, nsim = 99) # T = 153.72, p-value = 0.01
 ProbRM <- relrisk(artifact_ppp, sigma = bw.ppl)
 dominant <- im.apply(ProbRM, which.max)
 materials <- levels(marks(artifact_ppp))
