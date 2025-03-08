@@ -7,7 +7,7 @@ library(readxl)
 
 artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dauren.xlsx")
 artifact_sf <- st_as_sf(artifact_data, coords = c("Longitude", "Latitude"), crs = 4326)
-elevation_raster <- raster("/Users/kisa/Desktop/map.tif") # file too big, so it's on our drive
+elevation_raster <- raster("/Users/kisa/Desktop/map.tif")
 artifact_sf <- st_transform(artifact_sf, crs = st_crs(elevation_raster))
 artifact_elev <- extract(elevation_raster, st_coordinates(artifact_sf))
 set.seed(123)  #  Generate random points for comparison
@@ -24,7 +24,7 @@ artifact_elev <- artifact_elev + runif(length(artifact_elev), min = -0.01, max =
 random_elev   <- random_elev + runif(length(random_elev), min = -0.01, max = 0.01)
 # Perform KS Test with fluttered values: Compare artifact elevations vs. random elevations
 ks_test <- ks.test(artifact_elev, random_elev)
-print(ks_test)
+print(ks_test) # D = 0.5991, p-value < 2.2e-16
 
 # Density Plot
 pdf("KS_Elevation_Density.pdf", width = 8, height = 6)
@@ -42,3 +42,26 @@ hist(artifact_elev, breaks = 30, col = rgb(1, 0, 0, 0.5), xlim = range(c(artifac
 hist(random_elev, breaks = 30, col = rgb(0, 0, 1, 0.5), add = TRUE)
 legend("topright", legend = c("Artifacts", "Random Locations"), fill = c("red", "blue"))
 dev.off()
+
+###########
+#### FROM EMILY: ####
+xmin <- min(artifact_data$Longitude, na.rm = TRUE)
+xmax <- max(artifact_data$Longitude, na.rm = TRUE)
+ymin <- min(artifact_data$Latitude, na.rm = TRUE)
+ymax <- max(artifact_data$Latitude, na.rm = TRUE)
+print(c(xmin, xmax, ymin, ymax))
+study_window <- owin(xrange = c(78.64065, 78.64306), yrange = c(43.31997775, 43.32382))
+
+artifact_ppp <- ppp(x = artifact_data$Longitude, y = artifact_data$Latitude, marks = NULL, window = study_window)
+
+elev_rpj = projectRaster(elevation_raster, crs = 4326)
+elev_crop = crop(elev_rpj, extent(xmin, xmax, ymin, ymax))
+plot(elev_crop)
+elev_matrix = matrix(elev_crop[], nrow = nrow(elev_crop), ncol = ncol(elev_crop), byrow = T)
+elev_matrix = elev_matrix[nrow(elev_matrix):1,]
+elev_im = im(elev_matrix, xrange = c(xmin, xmax), yrange = c(ymin, ymax))
+plot(elev_im)
+
+cdf.test(artifact_ppp, elev_im, test = "ks", model = "Poisson") #this shows that there is dependence on elevation 
+plot(cdf.test(artifact_ppp, elev_im, test = "ks", model = "Poisson")) 
+auc(artifact_ppp, elev_im) #this shows that the explanatory power of elevation for the location of artifacts is relatively weak
