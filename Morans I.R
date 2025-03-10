@@ -8,7 +8,7 @@ library(sf)
 library(readxl)
 library(ggplot2)
 
-artifact_data <- read_excel("/Users/kisa/Desktop/Surface Artifacts Full Data Dauren.xlsx")
+artifact_data <- read_excel("Data/Surface Artifacts Full Data Dauren.xlsx")
 artifact_data$DATACLASS <- as.factor(artifact_data$DATACLASS)
 artifact_sf <- st_as_sf(artifact_data, coords = c("Longitude", "Latitude"), crs = 4326)
 artifact_sf <- st_transform(artifact_sf, crs = 32644)
@@ -30,10 +30,14 @@ head(loc_moran)
 
 artifact_sf$LocalI  <- loc_moran[, "Ii"]
 artifact_sf$LocalP  <- loc_moran[, "Pr(z != E(Ii))"]  # two-tailed p-value
+#there are only 20 points with significant Local Moran's I values, I would be cautious about interpreting this
 
 png("Local_Moran_Plot.png", width=1200, height=900, res=150)
-ggplot(data = artifact_sf) +
+ggplot(data = artifact_sf %>% filter(LocalP <= 0.05)) +
   geom_sf(aes(color=LocalI)) +
-  scale_color_viridis_c() +
+  #scale_color_viridis_c() +
+  scale_color_gradient2(midpoint = 0, low = "blue", mid = "white", high = "red", 
+                     breaks = c(-1, 0, 2), 
+                     labels = c("negative", "zero", "positive")) +
   labs(title="Local Moran's I for Weight") 
 dev.off()
