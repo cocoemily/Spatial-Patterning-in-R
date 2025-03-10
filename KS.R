@@ -24,7 +24,7 @@ artifact_elev <- artifact_elev + runif(length(artifact_elev), min = -0.01, max =
 random_elev   <- random_elev + runif(length(random_elev), min = -0.01, max = 0.01)
 # Perform KS Test with fluttered values: Compare artifact elevations vs. random elevations
 ks_test <- ks.test(artifact_elev, random_elev)
-print(ks_test)
+print(ks_test) # D = 0.5991, p-value < 2.2e-16
 
 # Density Plot
 pdf("KS_Elevation_Density.pdf", width = 8, height = 6)
@@ -64,7 +64,5 @@ elev_im = im(elev_matrix, xrange = c(xmin, xmax), yrange = c(ymin, ymax))
 plot(elev_im)
 
 cdf.test(artifact_ppp, elev_im, test = "ks", model = "Poisson") #this shows that there is dependence on elevation 
-#plot(cdf.test(artifact_ppp, elev_im, test = "ks", model = "Poisson")) 
-auc(artifact_ppp, elev_im) #this shows that the explanatory power of elevation for the location of artifacts is relative weak
-
-##############
+plot(cdf.test(artifact_ppp, elev_im, test = "ks", model = "Poisson")) 
+auc(artifact_ppp, elev_im) #this shows that the explanatory power of elevation for the location of artifacts is relatively weak

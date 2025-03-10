@@ -26,6 +26,7 @@ xmax <- max(artifact_data$Longitude, na.rm = TRUE)
 ymin <- min(artifact_data$Latitude, na.rm = TRUE)
 ymax <- max(artifact_data$Latitude, na.rm = TRUE)
 print(c(xmin, xmax, ymin, ymax))
+# results are 78.64065 78.64306 43.31998 43.32382, I changed y min so all the points are in the window
 study_window <- owin(xrange = c(78.64065, 78.64306), yrange = c(43.31997775, 43.32382))
 # Check for outside points
 outside_points <- artifact_data %>% 
@@ -79,8 +80,8 @@ print(
     geom_text(aes(label = Count), color = "black", size = 3) +
     scale_fill_gradient(low = "lightblue", high = "blue") +
     labs(title = "Quadrat Count of Artifacts", 
-         x = "Easting (m)", 
-         y = "Northing (m)") +
+         x = expression("East"%->%"(m)"), 
+         y = expression("North"%->%"(m)")) +
     theme_minimal() +
     theme(
       plot.title   = element_text(hjust = 0.5, face = "bold", size = 16),
@@ -102,10 +103,10 @@ quadrat_height_m <- quadrat_height_deg * meters_per_deg_lat
 cat("Each quadrat is approximately:", round(quadrat_width_m, 2), "m horizontally, and", round(quadrat_height_m, 2), "m vertically\n")
 # Each quadrat is approximately: 13.94 m horizontally, and 38.88 m vertically
 
+# #####################
 # Perform the MAD test
 #mad_test <- mad.test(artifact_ppp, nsim = 999)
 
-# #####################
 ### FROM EMILY: #### 
 mad_test <- mad.test(artifact_ppp, fun = Linhom, sigma = bw.ppl, global = T, nsims = 99, use.theo = T)
 # here we are specifying that the test should use the Linhom function 
@@ -114,8 +115,8 @@ mad_test <- mad.test(artifact_ppp, fun = Linhom, sigma = bw.ppl, global = T, nsi
 # I also include a border correction (section 7.4.3) to avoid biases due to our artificial borders from survey
 print(mad_test) # Print the MAD test results
 
-#visualization of the L function (which is a tranformation of the K function)
-rLfun = envelope(artifacts.ppp, Linhom, sigma = bw.ppl,
+#visualization of the L function (which is a transformation of the K function)
+rLfun = envelope(artifact_ppp, Linhom, sigma = bw.ppl,
                  nsim = 99, global = T, use.theory = T)
 plot(rLfun)
 #this shows that points are more clustered than expected at short distances, but more dispersed than expected at larger distances
@@ -153,7 +154,7 @@ p <- ggplot(artifact_df, aes(x = X_m, y = Y_m, shape = new_dataclass, color = ne
   geom_point(size = 3) +
   scale_shape_manual(values = custom_shapes) +
   scale_color_manual(values = custom_colors) +
-  labs(title = "Artifact Point Pattern", x = "Easting (m)", y = "Northing (m)", shape = "Artifact Type", color = "Artifact Type") +
+  labs(title = "Artifact Point Pattern", x = expression("East"%->%"(m)"), y = expression("North"%->%"(m)"), shape = "Artifact Type", color = "Artifact Type") +
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
